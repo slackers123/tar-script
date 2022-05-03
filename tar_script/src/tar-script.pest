@@ -1,0 +1,94 @@
+WHITESPACE =    _{ " " | "\t" | "\n" | "\r"}
+EOS = 			_{ ";" }
+
+Program = 		_{ SOI ~ definitions? ~ functions ~ EOI }
+
+definitions = 	  _{ (definition | import)+ }
+
+definition =     { "#def" ~ ident ~ "=" ~ ident ~ EOS }
+import = 	     { "#use" ~ ident ~ ("::" ~ident)* ~ ("::" ~ "{" ~ ident ~ ("," ~ ident)* ~ "}")? ~ EOS }
+
+functions =      { funcDef+ }
+
+funcDef = 		 { "fn" ~ ident ~ "(" ~ args? ~ ")" ~ ("->" ~ retTy)? ~ "{" ~ block ~ "}" }
+
+retTy =       { arrayOrType }
+
+block = {
+	(
+        decl
+      | funcCall
+      | valAssign
+      | ifStmt
+      | whileLoop
+    )*
+     ~ returnStmt?
+}
+
+whileLoop =  { "while" ~ "(" ~ condition ~ ")" ~ "{" ~ block ~ "}" }
+
+ifStmt =    { "if" ~ "(" ~ condition ~ ")" ~ "{" ~ block ~ "}" ~
+             ("else" ~ "if" ~ "(" ~ condition ~ ")" ~ "{" ~ block ~ "}")* ~
+             ("else" ~ "{" ~ block ~ "}")? }
+
+condition =  { bool | boolExpr | innerFuncCall }
+
+boolExpr =     { Expr ~ boolOp ~ Expr }
+
+returnStmt = 	 { "return" ~ Expr ~ EOS }
+
+valAssign = 	 { ident ~ "=" ~ Expr ~ EOS }
+
+decl = 	         { arrayOrType ~ ident ~ "=" ~ Expr ~ EOS }
+
+funcCall = 		  { ident ~AVP? ~ "(" ~ (Expr ~ ",")* ~ Expr? ~ ")" ~ EOS }
+innerFuncCall = { ident ~ "(" ~ (Expr ~ ",")* ~ Expr? ~ ")" }
+
+Expr =           { bool | Sum | string | array }
+
+Sum =            { Product ~ ((plus | minus) ~ Product)* }
+
+Product =        { Value ~ ((mul | div) ~ Value)* }
+
+Value =          _{ float | int | innerFuncCall | ident | "(" ~ Expr ~ ")" }
+
+boolOp =        _{ equal | greaterThan | lessThan | greaterThanEqual | lessThanEqual }
+
+operation =     _{ plus | minus | div | mul }
+
+plus =  { "+" }
+minus = { "-" }
+div =   { "/" }
+mul =   { "*" }
+equal = { "==" }
+notEqual = { "!=" }
+greaterThan = { ">" }
+lessThan = { "<" }
+greaterThanEqual = { ">=" }
+lessThanEqual = { "<=" }
+
+int = 			@{ ASCII_DIGIT+ }
+
+string = 		@{ "\"" ~ ( (!"\"" ~ ANY) )* ~ "\"" }
+
+float =     @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ "f" }
+
+bool =      @{"true" | "false"}
+
+array =      { "[" ~ Expr? ~ ("," ~ Expr)* ~ "]" ~ ("::" ~ Type)? }
+
+args = 			 { arg ~ ("," ~ arg)* }
+
+arg = 			 { ident ~ ":" ~ arrayOrType }
+
+ident = 		@{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+arrayOrType = _{ Array | Type }
+
+Type = 			 { "int" | "string" | "float" | "bool" }
+
+Array =      { Type ~ brackets }
+
+brackets =  _{ "[" ~ brackets? ~ "]" }
+
+AVP =        { ":>" }
