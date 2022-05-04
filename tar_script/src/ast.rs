@@ -444,7 +444,7 @@ fn parse_array(arr: Pair<Rule>) -> AstNode {
             AstNode::Float(_) => {ty = "float".to_owned()}
 
             _ => {
-                panic!("invalid part of array");
+                panic!("invalid part of array: {:?}", res[0]);
             }
         }
     }

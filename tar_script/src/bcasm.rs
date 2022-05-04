@@ -50,7 +50,6 @@ pub fn assemble_bc(defs: Vec<ast::AstNode>, funcs: HashMap<String, ast::AstNode>
                     i+=1;
                 }
             }
-
             asm_block(&mut bc, &mut consts, &mut temp_vars, block);
         }
 
@@ -113,6 +112,7 @@ fn asm_block(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &mut HashMap<St
                 let idx = temp_vars.len() as u8;
                 temp_vars.insert(ident, idx);
                 if ast::is_const(*val.clone()) {
+                    println!("calling load_val from asm_block decl");
                     len += load_val(bc, consts, temp_vars, *val);
                 }
                 else {
@@ -124,6 +124,7 @@ fn asm_block(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &mut HashMap<St
             }
 
             ast::AstNode::ValAssign{ident, val} => {
+                println!("calling load_val from asm_block val assign");
                 len += load_val(bc, consts, temp_vars, *val);
 
                 bc.push(BCInst::STORE_LOCAL_VAL);
@@ -155,9 +156,11 @@ fn asm_block(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &mut HashMap<St
 
                 let len_tmp = len - l1;
 
-                let mut nbc = bc.clone();
-                let l = asm_block(&mut nbc, &mut consts.clone(), &mut temp_vars.clone(), block.clone()) as u64;
+                let l = asm_block(&mut bc.clone(), &mut consts.clone(), &mut temp_vars.clone(), block.clone()) as u64;
                 bc.push(BCInst::JUMP_IF_FALSE);
+                let i = bc.len(); // TODO: use the i to take of the top of the bc vec insert the jump distance and put back the bytecode (maybe make it into a new func)
+                bc.push(0);
+                bc.get
                 len += asm_jmp_dist(bc, l, true, true);
                 len += asm_block(bc, consts, temp_vars, block);
                 bc.push(BCInst::JUMP);
@@ -225,8 +228,13 @@ fn asm_jmp_dist(bc: &mut Vec<u8>, diff: u64, go_fwd: bool, in_while: bool) -> us
 fn asm_func_call(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String, u8>, ident: String, args: Vec<ast::AstNode>, has_avp: bool) -> usize {
     let mut len = 0;
     let mut i = args.len() as i32-1;
+    let mut var = 0;
     while i >= 0{
+        println!("calling load_val from asm_func_call");
         len += load_val(bc, consts, temp_vars, args[i as usize].clone());
+        if i == 0 {
+            var = bc[bc.len()-1];
+        }
         i-=1;
     }
     let idx = push_to_consts(consts, Val::String(ident.clone()));
@@ -238,7 +246,7 @@ fn asm_func_call(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<St
     if has_avp {
         if args.len() > 0 {
             bc.push(BCInst::STORE_LOCAL_VAL);
-            bc.push(bc[bc.len()-(len-2)]);
+            bc.push(var);
             len += 2;
         }
         else {
@@ -288,6 +296,7 @@ fn asm_expr(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String,
         }
 
         ast::AstNode::Array{ty, arr} => {
+            println!("calling load_val from asm_expr");
             len += load_val(bc, consts, temp_vars, ast::AstNode::Array{ty, arr});
         }
 
@@ -298,8 +307,10 @@ fn asm_expr(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String,
 
 fn asm_bin_op(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String, u8>, op: ast::BinOp, lhs: ast::AstNode, rhs: ast::AstNode) -> usize {
     let mut len = 0;
+    // println!("bc at {:?}: {:?}", op, bc);
     len += asm_expr(bc, consts, temp_vars, lhs);
     len += asm_expr(bc, consts, temp_vars, rhs);
+    // println!("bc: {:?}", bc);
     match op {
         ast::BinOp::Plus => {
             bc.push(BCInst::ADD);
@@ -332,6 +343,12 @@ fn asm_bool_op(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<Stri
         }
         ast::BoolOp::LessThan => {
             bc.push(BCInst::LESS_THAN);
+        }
+        ast::BoolOp::GreaterThanEqual => {
+            bc.push(BCInst::GREATER_THAN_EQUAL);
+        }
+        ast::BoolOp::LessThanEqual => {
+            bc.push(BCInst::LESS_THAN_EQUAL);
         }
         _ => {todo!("implement all boolean operations in the vm")}
     }
@@ -366,6 +383,7 @@ fn load_val(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String,
         ast::AstNode::Array{ty, arr} => {
             let mut i = arr.len() as  i32 -1;
             while i >= 0 {
+                println!("calling load_val from load_val");
                 len += load_val(bc, consts, temp_vars, arr[i as usize].clone());
                 i-= 1;
             }
@@ -391,6 +409,9 @@ fn load_val(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String,
         }
 
         ast::AstNode::BinOp{op, lhs, rhs} => {
+            if format!("{:?}", op) == "Div" {
+                println!("calling bin op from load_val: {:?}", op);
+            }
             len += asm_bin_op(bc, consts, temp_vars, op, *lhs, *rhs);
             return len;
         }

@@ -39,38 +39,42 @@ impl BCInst {
     pub const GREATER_THAN: u8      = 0x08; // 0    
     /// stack: [..., lesser, greater] checks if the second to top value is less than the top value and pushes the result
     pub const LESS_THAN: u8         = 0x09; // 0    
+    // stack: [..., greater, lesser] checks if the second to top value is greater than the top value and pushes the result
+    pub const GREATER_THAN_EQUAL: u8= 0x0a; // 0    
+    /// stack: [..., lesser, greater] checks if the second to top value is less than the top value and pushes the result
+    pub const LESS_THAN_EQUAL: u8   = 0x0b; // 0    
     /// stack: [..., value1, value2] the last two values have to be bools; ors the last two vals and pushes the result
-    pub const OR: u8                = 0x0a; // 0    
+    pub const OR: u8                = 0x0c; // 0    
     /// stack: [..., value1, value2] the last two values have to be bools; ands the last two vals and pushes the result
-    pub const AND: u8               = 0x0b; // 0    
+    pub const AND: u8               = 0x0d; // 0    
     /// stack: [..., value1] the last val has to be a bool; inverts the last val on the stack
-    pub const NOT: u8               = 0x0c; // 0    
+    pub const NOT: u8               = 0x0e; // 0    
     /// stack: [..., value1] stores the top val in the local env
-    pub const STORE_LOCAL_VAL: u8   = 0x0d; // 1    
+    pub const STORE_LOCAL_VAL: u8   = 0x0f; // 1    
     /// pushes the specified local env val
-    pub const LOAD_LOCAL_VAL: u8    = 0x0e; // 1    
+    pub const LOAD_LOCAL_VAL: u8    = 0x10; // 1    
     /// stack: [..., arg1, arg2, ..., func name] has to be called after the function args have been pushed onto the stack; calls function named ontop of the stack
-    pub const CALL_FUNC: u8         = 0x0f; // 0    
+    pub const CALL_FUNC: u8         = 0x11; // 0    
     /// jumps to the value specified; all jumps: 1st word is 0 -> jump forward; first word is 1 -> jump backward; second word: how many bytes follow (these encode the actual distance can be 1 2 4 or 8)
-    pub const JUMP: u8              = 0x10; // 2-?  
+    pub const JUMP: u8              = 0x12; // 2-?  
     /// jumps by the amount specified if the top value on the stack is true
-    pub const JUMP_IF_TRUE: u8      = 0x11; // 2-?  
+    pub const JUMP_IF_TRUE: u8      = 0x13; // 2-?  
     /// jumps by the amount specified if the top value on the stack is false
-    pub const JUMP_IF_FALSE: u8     = 0x12; // 2-?  
+    pub const JUMP_IF_FALSE: u8     = 0x14; // 2-?  
     /// stack: [..., array, index, new value] inserts the new value at the index into the array (out of bounds exception)
-    pub const INSERT_ARR_AT: u8     = 0x13; // 0
+    pub const INSERT_ARR_AT: u8     = 0x15; // 0
     /// stack: [..., array, index] gets the new value at the index into the array (out of bounds exception)
-    pub const GET_ARR_AT: u8        = 0x14; // 0
+    pub const GET_ARR_AT: u8        = 0x16; // 0
     /// stack: [..., array, value] pushes the value onto the array
-    pub const PUSH_TO_ARR: u8       = 0x15; // 0    
+    pub const PUSH_TO_ARR: u8       = 0x17; // 0    
     /// stack: [..., array] gets the value from an array
-    pub const POP_FROM_ARR: u8      = 0x16; // 0    
+    pub const POP_FROM_ARR: u8      = 0x18; // 0    
     /// stack: [..., array] loads the length of a value onto the stack
-    pub const LOAD_ARR_LEN: u8      = 0x17; // 0
+    pub const LOAD_ARR_LEN: u8      = 0x19; // 0
     /// stack: [..., valn, ... val0, type, n] creates a new array with len n and a specified type and inserts preceding values
-    pub const MAKE_ARR: u8          = 0x18; // 0
+    pub const MAKE_ARR: u8          = 0x1a; // 0
     /// returns from a function 
-    pub const RET: u8               = 0x19; // 0
+    pub const RET: u8               = 0x1b; // 0
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, std::cmp::PartialEq)]
@@ -566,8 +570,8 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
             }
 
             BCInst::DIV => {
-                let val2 = stack.pop().expect("not enough vals on stack for subtraction op.");
-                let val1 = stack.pop().expect("not enough vals on stack for subtraction op.");
+                let val2 = stack.pop().expect("not enough vals on stack for div op.");
+                let val1 = stack.pop().expect("not enough vals on stack for div op.");
 
                 match val1 {
                     Val::Int(v) => {
@@ -833,6 +837,98 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
                     Val::Float(v) => {
                         if let Val::Float(v1) = val2 {
                             stack.push(Val::Bool(v < v1));
+                        }
+                        else {
+                            panic!("can only add the same types");
+                        }
+                    }
+
+                    Val::String(_) => {
+                        panic!("cannot compare strings");
+                    }
+
+                    Val::Bool(_) => {
+                        panic!("cannot compare bools");
+                    }
+
+                    Val::Array{ty: _, arr: _} => {
+                        panic!("cannot compare arrays");
+                    }
+                }
+            }
+
+            BCInst::GREATER_THAN_EQUAL => {
+                let val2 = stack.pop().expect("not enough vals on stack for greater than op.");
+                let val1 = stack.pop().expect("not enough vals on stack for greater than op.");
+
+                match val1 {
+                    Val::Int(v) => {
+                        if let Val::Int(v1) = val2 {
+                            stack.push(Val::Bool(v >= v1));
+                        }
+                        else {
+                            panic!("can only add the same types");
+                        }
+                    }
+
+                    Val::Long(v) => {
+                        if let Val::Long(v1) = val2 {
+                            stack.push(Val::Bool(v >= v1));
+                        }
+                        else {
+                            panic!("can only add the same types");
+                        }
+                    }
+
+                    Val::Float(v) => {
+                        if let Val::Float(v1) = val2 {
+                            stack.push(Val::Bool(v >= v1));
+                        }
+                        else {
+                            panic!("can only add the same types");
+                        }
+                    }
+
+                    Val::String(_) => {
+                        panic!("cannot compare strings");
+                    }
+
+                    Val::Bool(_) => {
+                        panic!("cannot compare bools");
+                    }
+
+                    Val::Array{ty: _, arr: _} => {
+                        panic!("cannot compare arrays");
+                    }
+                }
+            }
+
+            BCInst::LESS_THAN_EQUAL => {
+                let val2 = stack.pop().expect("not enough vals on stack for greater than op.");
+                let val1 = stack.pop().expect("not enough vals on stack for greater than op.");
+
+                match val1 {
+                    Val::Int(v) => {
+                        if let Val::Int(v1) = val2 {
+                            stack.push(Val::Bool(v <= v1));
+                        }
+                        else {
+                            panic!("can only add the same types");
+                        }
+                    }
+
+                    Val::Long(v) => {
+                        if let Val::Long(v1) = val2 {
+                            stack.push(Val::Bool(v <= v1));
+                        }
+                        else {
+                            panic!("can only add the same types");
+                        }
+                    }
+
+                    Val::Float(v) => {
+                        if let Val::Float(v1) = val2 {
+                            stack.push(Val::Bool(v <= v1));
                         }
                         else {
                             panic!("can only add the same types");

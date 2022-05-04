@@ -41,7 +41,7 @@ valAssign = 	 { ident ~ "=" ~ Expr ~ EOS }
 
 decl = 	         { arrayOrType ~ ident ~ "=" ~ Expr ~ EOS }
 
-funcCall = 		  { ident ~AVP? ~ "(" ~ (Expr ~ ",")* ~ Expr? ~ ")" ~ EOS }
+funcCall = 		  { ident ~ AVP? ~ "(" ~ (Expr ~ ",")* ~ Expr? ~ ")" ~ EOS }
 innerFuncCall = { ident ~ "(" ~ (Expr ~ ",")* ~ Expr? ~ ")" }
 
 Expr =           { bool | Sum | string | array }
@@ -52,7 +52,7 @@ Product =        { Value ~ ((mul | div) ~ Value)* }
 
 Value =          _{ float | int | innerFuncCall | ident | "(" ~ Expr ~ ")" }
 
-boolOp =        _{ equal | greaterThan | lessThan | greaterThanEqual | lessThanEqual }
+boolOp =        _{ equal | greaterThanEqual | lessThanEqual | lessThan | greaterThan }
 
 operation =     _{ plus | minus | div | mul }
 
