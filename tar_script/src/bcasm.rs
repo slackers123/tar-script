@@ -2,7 +2,7 @@ use crate::ast;
 
 use crate::bcvm::Val;
 use crate::bcvm::BCInst;
-use crate::bcvm::Type;
+// use crate::bcvm::Type;
 
 use std::collections::HashMap;
 
@@ -96,23 +96,23 @@ fn asm_block(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &mut HashMap<St
 
                     _ => {panic!("not supported: {:?}", *condition)}
                 }
-                let mut nbc = bc.clone();
-                asm_block(&mut nbc, &mut consts.clone(), temp_vars, block.clone());
-                let diff = nbc.len() as u64 - bc.len() as u64 + 1;
                 bc.push(BCInst::JUMP_IF_FALSE);
-                len += 1;
-                len += asm_jmp_dist(bc, diff, true, false);
+                let i = bc.len();
                 len += asm_block(bc, consts, temp_vars, block);
 
-                if else_if_stmt.is_some() {todo!("implement else if and else")}
-                if else_stmt.is_some() {todo!("implement else if and else")}
+                if else_if_stmt.is_some() {todo!("implement else if")}
+                let tmp_l = len;
+                if else_stmt.is_some() {
+                    bc.push(BCInst::JUMP);
+                }
+                
+                len += put_len_at(bc, i, bc.len()-i, true, false);
             }
 
             ast::AstNode::Declaration{ty: _, ident, val} => {
                 let idx = temp_vars.len() as u8;
                 temp_vars.insert(ident, idx);
                 if ast::is_const(*val.clone()) {
-                    println!("calling load_val from asm_block decl");
                     len += load_val(bc, consts, temp_vars, *val);
                 }
                 else {
@@ -124,7 +124,6 @@ fn asm_block(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &mut HashMap<St
             }
 
             ast::AstNode::ValAssign{ident, val} => {
-                println!("calling load_val from asm_block val assign");
                 len += load_val(bc, consts, temp_vars, *val);
 
                 bc.push(BCInst::STORE_LOCAL_VAL);
@@ -156,15 +155,12 @@ fn asm_block(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &mut HashMap<St
 
                 let len_tmp = len - l1;
 
-                let l = asm_block(&mut bc.clone(), &mut consts.clone(), &mut temp_vars.clone(), block.clone()) as u64;
                 bc.push(BCInst::JUMP_IF_FALSE);
-                let i = bc.len(); // TODO: use the i to take of the top of the bc vec insert the jump distance and put back the bytecode (maybe make it into a new func)
-                bc.push(0);
-                bc.get
-                len += asm_jmp_dist(bc, l, true, true);
+                let i = bc.len();
                 len += asm_block(bc, consts, temp_vars, block);
+                len += put_len_at(bc, i, bc.len()-i, true, true);
                 bc.push(BCInst::JUMP);
-                len += asm_jmp_dist(bc, l + len_tmp as u64, false, true);
+                len += put_len_at(bc, bc.len(), bc.len()-i  + len_tmp, false, false);
                 len += 2;
             }
 
@@ -175,6 +171,17 @@ fn asm_block(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &mut HashMap<St
             _ => {panic!("not supported: {:?}", b)}
         }
     }
+    return len;
+}
+
+fn put_len_at(bc: &mut Vec<u8>, i: usize, l: usize, go_fwd: bool, in_while: bool) -> usize {
+    let mut len = 0;
+
+    let mut temp = vec![];
+    len += asm_jmp_dist(&mut temp, l as u64, go_fwd, in_while);
+
+    bc.splice(i..i, temp);
+
     return len;
 }
 
@@ -230,7 +237,6 @@ fn asm_func_call(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<St
     let mut i = args.len() as i32-1;
     let mut var = 0;
     while i >= 0{
-        println!("calling load_val from asm_func_call");
         len += load_val(bc, consts, temp_vars, args[i as usize].clone());
         if i == 0 {
             var = bc[bc.len()-1];
@@ -296,7 +302,6 @@ fn asm_expr(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String,
         }
 
         ast::AstNode::Array{ty, arr} => {
-            println!("calling load_val from asm_expr");
             len += load_val(bc, consts, temp_vars, ast::AstNode::Array{ty, arr});
         }
 
@@ -307,10 +312,8 @@ fn asm_expr(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String,
 
 fn asm_bin_op(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String, u8>, op: ast::BinOp, lhs: ast::AstNode, rhs: ast::AstNode) -> usize {
     let mut len = 0;
-    // println!("bc at {:?}: {:?}", op, bc);
     len += asm_expr(bc, consts, temp_vars, lhs);
     len += asm_expr(bc, consts, temp_vars, rhs);
-    // println!("bc: {:?}", bc);
     match op {
         ast::BinOp::Plus => {
             bc.push(BCInst::ADD);
@@ -383,7 +386,6 @@ fn load_val(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String,
         ast::AstNode::Array{ty, arr} => {
             let mut i = arr.len() as  i32 -1;
             while i >= 0 {
-                println!("calling load_val from load_val");
                 len += load_val(bc, consts, temp_vars, arr[i as usize].clone());
                 i-= 1;
             }
@@ -410,7 +412,6 @@ fn load_val(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &HashMap<String,
 
         ast::AstNode::BinOp{op, lhs, rhs} => {
             if format!("{:?}", op) == "Div" {
-                println!("calling bin op from load_val: {:?}", op);
             }
             len += asm_bin_op(bc, consts, temp_vars, op, *lhs, *rhs);
             return len;

@@ -3,15 +3,33 @@
 #use std::lists::{push, get_len, get_at};
 
 fn main() {
-    int i = 0;
-    while (i < 10) {
-        log2(10/10);
-        i = i + 1;
-    }
+    draw_circ();
 }
 
-fn log2(a: int) {
-    log(a);
+fn draw_circ() {
+    int i = 1;
+    int[[]] frame = [[]::int];
+    while (i < 10) {
+        int j = 0;
+        int[] temp = []::int;
+        while (j < 10) {
+            int dist = get_dist(i, j, 5, 5);
+
+            log(dist);
+            if (dist < 3) {
+                push:>(temp, 1);
+            }
+            if (dist > 3) {
+                push:>(temp, 0);
+            }
+
+            j = j + 1;
+        }
+        push:>(frame, temp);
+        i = i + 1;
+    }
+    log(frame);
+    draw(frame);
 }
 
 fn draw(frame: int[[]]) {

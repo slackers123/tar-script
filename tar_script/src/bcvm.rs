@@ -229,7 +229,6 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
 
     let mut i: usize = 0;
     while i < func.len() {
-        // println!("fn: {} i: {}", func[i], i);
         match func[i] {
             BCInst::PRINT => {
                 print_val(stack.pop().expect("missing val on stack for print operation"))
