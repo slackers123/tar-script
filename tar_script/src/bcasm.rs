@@ -168,6 +168,16 @@ fn asm_block(bc: &mut Vec<u8>, consts: &mut Vec<Val>, temp_vars: &mut HashMap<St
                 len += asm_expr(bc, consts, temp_vars, *ret);
             }
 
+            ast::AstNode::StartProf => {
+                bc.push(BCInst::START_PROF);
+                len += 1;
+            }
+
+            ast::AstNode::EndProf => {
+                bc.push(BCInst::STOP_PROF);
+                len += 1;
+            }
+
             _ => {panic!("not supported: {:?}", b)}
         }
     }

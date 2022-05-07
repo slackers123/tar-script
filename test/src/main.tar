@@ -12,6 +12,7 @@ fn draw_circ() {
     while (i < 10) {
         int j = 0;
         int[] temp = []::int;
+        start_prof;
         while (j < 10) {
             int dist = get_dist(i, j, 5, 5);
 
@@ -25,6 +26,7 @@ fn draw_circ() {
 
             j = j + 1;
         }
+        end_prof;
         push:>(frame, temp);
         i = i + 1;
     }

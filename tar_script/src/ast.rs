@@ -46,6 +46,8 @@ pub enum AstNode {
     Bool(bool),
     Float(f64),
     String(String),
+    StartProf,
+    EndProf,
     Array{
         ty: String,
         arr: Vec<AstNode>
@@ -197,6 +199,12 @@ fn parse_fn_block(func: Pair<Rule>) -> Vec<AstNode> {
             }
             Rule::whileLoop => {
                 block.push(parse_while_loop(j));
+            }
+            Rule::s_prof => {
+                block.push(AstNode::StartProf);
+            }
+            Rule::e_prof => {
+                block.push(AstNode::EndProf);
             }
             _ => {
                 panic!("Unknown statemen: {:?}", j.as_rule());
