@@ -3,3 +3,6 @@ tar_script/Cargo.lock
 
 tarmg/target/
 tarmg/Cargo.lock
+
+rust_comp/target/
+rust_comp/Cargo.lock

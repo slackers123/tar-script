@@ -1,5 +1,5 @@
 #def entry = main;
-#use std::{log, start_prof, stop_prof};
+#use std::{log, start_prof, stop_prof, sqrt};
 #use std::lists::{push, get_len, get_at};
 
 fn main() {
@@ -25,11 +25,11 @@ fn draw_circ() {
 
             j = j + 1;
         }
-        end_prof;
+        start_prof;
         push:>(frame, temp);
+        end_prof;
         i = i + 1;
     }
-    stop_prof();
     draw(frame);
 }
 
@@ -47,16 +47,7 @@ fn draw(frame: int[[]]) {
     }
 }
 
-fn sqrt(a: int) -> int {
-    int counter = 1;
-    int sqroot = 1;
-    while (sqroot <= a) {
-        counter = counter + 1;
-        sqroot = counter*counter;
-    }
-    return counter - 1;
-}
-
 fn get_dist(x1: int, y1: int, x2: int, y2: int) -> int {
-    return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+    int ret = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+    return ret;
 }

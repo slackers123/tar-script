@@ -80,6 +80,8 @@ impl BCInst {
     pub const START_PROF: u8        = 0x1d; // 0
     /// stops a currently running profiling timer
     pub const STOP_PROF: u8         = 0x1e; // 0
+    /// takes the square root of the top value and pushes it 
+    pub const SQRT: u8              = 0x1f; // 0
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, std::cmp::PartialEq)]
@@ -103,6 +105,11 @@ pub enum Type {
     String,
     Bool,
     Array,
+}
+
+struct Profiler {
+    time: Instant,
+    instruction_start: usize,
 }
 
 fn print_val(val: Val) {
@@ -223,7 +230,7 @@ pub fn run_from_string(string: String) -> Result<()> {
 
 #[allow(unused)]
 pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stack: &mut Vec<Val>, d: u8) {
-    let mut profTimer: Option<Instant> = None;
+    let mut profTimer: Option<Profiler> = None;
 
     let d = d+1;
     if d > MAX_RECURSION_DEPTH {
@@ -1173,13 +1180,46 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
 
             BCInst::START_PROF => {
                 if profTimer.is_some() {panic!("can not profile more than once at the same time")};
-                profTimer = Some(Instant::now());
+                profTimer = Some(Profiler {time: Instant::now(), instruction_start: i});
             }
 
             BCInst::STOP_PROF => {
                 if profTimer.is_none() {panic!("can only stop a profile if there is one currently running")};
 
-                println!("PROFILER: The time since profile start: {:?}", profTimer.unwrap());
+                let tmp = profTimer.unwrap();
+                println!("PROFILER: time since profile start: {:?}", tmp.time.elapsed());
+                println!("PROFILER: instructions since start: {}", i - tmp.instruction_start);
+                profTimer = None;
+            }
+
+            BCInst::SQRT => {
+                let val = stack.pop().expect("stack too small for sqrt op");
+
+                match val {
+                    Val::Float(v) => {
+                        stack.push(Val::Float(v.sqrt()));
+                    }
+
+                    Val::Int(v) => {
+                        stack.push(Val::Int(((v as f32).sqrt()) as i32));
+                    }
+
+                    Val::Long(v) => {
+                        stack.push(Val::Long(((v as f64).sqrt()) as i64));
+                    }
+
+                    Val::String(_) => {
+                        panic!("can not take the sqrt of a string");
+                    }
+
+                    Val::Bool(_) => {
+                        panic!("can not take the sqrt of a bool");
+                    }
+
+                    Val::Array{ty: _, arr: _} => {
+                        panic!("can not take the sqrt of an array");
+                    }
+                }
             }
 
             BCInst::NOP => {}
