@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 use std::collections::HashMap;
 use std::fs;
+use std::time::{Duration, Instant};
 
 use serde::{Serialize, Deserialize};
 use serde_json::Result;
@@ -75,6 +76,10 @@ impl BCInst {
     pub const MAKE_ARR: u8          = 0x1a; // 0
     /// returns from a function 
     pub const RET: u8               = 0x1b; // 0
+    /// starts a profiling timer
+    pub const START_PROF: u8        = 0x1d; // 0
+    /// stops a currently running profiling timer
+    pub const STOP_PROF: u8         = 0x1e; // 0
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, std::cmp::PartialEq)]
@@ -218,6 +223,8 @@ pub fn run_from_string(string: String) -> Result<()> {
 
 #[allow(unused)]
 pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stack: &mut Vec<Val>, d: u8) {
+    let mut profTimer: Option<Instant> = None;
+
     let d = d+1;
     if d > MAX_RECURSION_DEPTH {
         panic!("stack overflow error")
@@ -1162,6 +1169,17 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
                 else {
                     panic!("the top value hast to be a int for array creation");
                 }
+            }
+
+            BCInst::START_PROF => {
+                if profTimer.is_some() {panic!("can not profile more than once at the same time")};
+                profTimer = Some(Instant::now());
+            }
+
+            BCInst::STOP_PROF => {
+                if profTimer.is_none() {panic!("can only stop a profile if there is one currently running")};
+
+                println!("PROFILER: The time since profile start: {:?}", profTimer.unwrap());
             }
 
             BCInst::NOP => {}

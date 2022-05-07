@@ -1,5 +1,5 @@
 #def entry = main;
-#use std::log;
+#use std::{log, start_prof, stop_prof};
 #use std::lists::{push, get_len, get_at};
 
 fn main() {
@@ -7,19 +7,19 @@ fn main() {
 }
 
 fn draw_circ() {
+    start_prof();
     int i = 1;
     int[[]] frame = [[]::int];
-    while (i < 10) {
+    while (i < 100) {
         int j = 0;
         int[] temp = []::int;
-        while (j < 10) {
-            int dist = get_dist(i, j, 5, 5);
+        while (j < 100) {
+            int dist = get_dist(i, j, 50, 50);
 
-            log(dist);
-            if (dist < 3) {
+            if (dist < 10) {
                 push:>(temp, 1);
             }
-            if (dist > 3) {
+            if (dist > 10) {
                 push:>(temp, 0);
             }
 
@@ -28,7 +28,7 @@ fn draw_circ() {
         push:>(frame, temp);
         i = i + 1;
     }
-    log(frame);
+    stop_prof();
     draw(frame);
 }
 

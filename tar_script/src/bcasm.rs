@@ -12,6 +12,8 @@ pub fn assemble_bc(defs: Vec<ast::AstNode>, funcs: HashMap<String, ast::AstNode>
     fns.insert("push".to_owned(), (vec![BCInst::STORE_LOCAL_VAL, 0, BCInst::STORE_LOCAL_VAL, 1, BCInst::LOAD_LOCAL_VAL, 0, BCInst::LOAD_LOCAL_VAL, 1, BCInst::PUSH_TO_ARR], vec![]));
     fns.insert("get_len".to_owned(), (vec![BCInst::LOAD_ARR_LEN], vec![]));
     fns.insert("get_at".to_owned(), (vec![BCInst::STORE_LOCAL_VAL, 0, BCInst::STORE_LOCAL_VAL, 1, BCInst::LOAD_LOCAL_VAL, 0, BCInst::LOAD_LOCAL_VAL, 1, BCInst::GET_ARR_AT], vec![]));
+    fns.insert("start_prof".to_owned(), (vec![BCInst::START_PROF], vec![]));
+    fns.insert("stop_prof".to_owned(), (vec![BCInst::STOP_PROF], vec![]));
     let mut entry = None;
     for d in defs { // TODO: handle imports
         match d {
