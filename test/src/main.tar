@@ -25,6 +25,7 @@ fn draw_circ() {
 
             j = j + 1;
         }
+        end_prof;
         push:>(frame, temp);
         i = i + 1;
     }

@@ -16,14 +16,20 @@ retTy =       { arrayOrType }
 
 block = {
 	(
-        decl
-      | funcCall
-      | valAssign
-      | ifStmt
-      | whileLoop
-    )*
-     ~ returnStmt?
+      prof
+    | decl
+    | funcCall
+    | valAssign
+    | ifStmt
+    | whileLoop
+  )*
+    ~ returnStmt?
 }
+
+prof =        _{ s_prof | e_prof }
+
+s_prof =       { "start_prof" ~ EOS}
+e_prof =       { "end_prof" ~ EOS}
 
 whileLoop =  { "while" ~ "(" ~ condition ~ ")" ~ "{" ~ block ~ "}" }
 
