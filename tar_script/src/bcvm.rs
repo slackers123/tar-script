@@ -710,7 +710,11 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
 
             BCInst::CALL_FUNC => {
                 if let Val::String(v) = stack.pop().expect("not enough vals") {
-                    run_func(v, funcs, stack, d);
+                    let t = Instant::now();
+                    run_func(v.clone(), funcs, stack, d);
+                    if v == "push" {
+                        println!("func call took {:?}", t.elapsed());
+                    }
                 }
                 else {
                     panic!("the top stack val has to be a string for CALL_FUNC");
@@ -1131,9 +1135,11 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
             }
 
             BCInst::PUSH_TO_ARR => {
+                let t = Instant::now();
                 let val = stack.pop().expect("stack too short");
                 let array = stack.pop().expect("stack too short");
 
+                let t = Instant::now();
                 if let Val::Array{ty, mut arr} = array {
                     arr.push(val);
                     stack.push(Val::Array{ty, arr});
@@ -1228,7 +1234,7 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
                 return;
             }
 
-            _ => panic!("unknown byte code: {}", func[i])
+            _ => {panic!("unknown byte code: {}", func[i]);}
         }
         i+=1;
     }
