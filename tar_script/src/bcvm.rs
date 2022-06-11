@@ -239,7 +239,7 @@ pub fn run_func(name: String, funcs: &HashMap<String, (Vec<u8>, Vec<Val>)>, stac
 
     let (func, consts) = funcs.get(&name).expect(format!("non existent function: {}", name).as_str());
     
-    let mut env: Vec<Val>   = vec![];
+    let mut env: Vec<Val> = vec![];
 
     let mut i: usize = 0;
     while i < func.len() {
