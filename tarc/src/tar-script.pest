@@ -50,15 +50,15 @@ decl = 	         { arrayOrType ~ ident ~ "=" ~ Expr ~ EOS }
 funcCall = 		  { ident ~ AVP? ~ "(" ~ (Expr ~ ",")* ~ Expr? ~ ")" ~ EOS }
 innerFuncCall = { ident ~ "(" ~ (Expr ~ ",")* ~ Expr? ~ ")" }
 
-Expr =           { bool | Sum | string | array }
+Expr =           { bool | Sum | array }
 
 Sum =            { Product ~ ((plus | minus) ~ Product)* }
 
 Product =        { Value ~ ((mul | div) ~ Value)* }
 
-Value =          _{ float | int | innerFuncCall | ident | "(" ~ Expr ~ ")" }
+Value =          _{ string | float | int | innerFuncCall | "[" ~ Expr ~ "]:as" ~ Type | ident | "(" ~ Expr ~ ")" }
 
-boolOp =        _{ equal | greaterThanEqual | lessThanEqual | lessThan | greaterThan }
+boolOp =        _{ equal | greaterThanEqual | lessThanEqual | lessThan | greaterThan | notEqual }
 
 operation =     _{ plus | minus | div | mul }
 

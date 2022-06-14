@@ -1,0 +1,11 @@
+#def entry = main;
+#use std::log;
+#use std::lists::{push};
+
+fn main() {
+    int i = 0;
+    while (i < 100) {
+        string some = "This is supposed to be a long stringaahahahahahh";
+        log(some);
+    }
+}

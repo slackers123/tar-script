@@ -3,44 +3,44 @@
 #use std::lists::{push, get_len, get_at};
 
 fn main() {
-    draw_circ();
+    fib_l(1, 1, 0);
+}
+
+fn fib_l(a: int, b: int, d: int) {
+    if (d < 40) {
+        log(a);
+        fib(b, a+b, d+1);
+    }
+}
+
+fn fib(n: int) -> int {
+    if (n < 2) {
+        return n;
+    }
+    else {
+        return 0;
+    }
 }
 
 fn draw_circ() {
     start_prof();
     int i = 1;
-    int[[]] frame = [[]::int];
     while (i < 100) {
         int j = 0;
-        int[] temp = []::int;
+        string temp = "";
         while (j < 100) {
             int dist = get_dist(i, j, 50, 50);
 
-            if (dist < 10) {
-                push:>(temp, 1);
+            if (dist < 20) {
+                temp = temp + 1;
             }
-            if (dist > 10) {
-                push:>(temp, 0);
+            if (dist > 20) {
+                temp = temp + 0;
             }
 
             j = j + 1;
         }
-        push:>(frame, temp);
-        i = i + 1;
-    }
-    draw(frame);
-}
-
-fn draw(frame: int[[]]) {
-    int i = 1;
-    while ( i < get_len(frame)) {
-        string s = "";
-        int j = 0;
-        while (j < get_len(get_at(frame, 1))) {
-            s = s + get_at(get_at(frame, i), j);
-            j = j + 1;
-        }
-        log(s);
+        log(temp);
         i = i + 1;
     }
 }

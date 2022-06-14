@@ -1,5 +1,5 @@
-tar_script/target/
-tar_script/Cargo.lock
+tarc/target/
+tarc/Cargo.lock
 
 tarmg/target/
 tarmg/Cargo.lock

@@ -91,7 +91,10 @@ pub enum AstNode {
         has_avp: bool, // does it contian the ":>" syntax
         args: Vec<AstNode>, // array of arguments given to the function (optional)
     },
-    // Expr(Box<AstNode>), // Can either be a calculation or a string
+    Conv {
+        expr: Box<AstNode>,
+        target: String
+    }
 }
 pub fn is_const(st: AstNode) -> bool {
     match st {
@@ -400,11 +403,6 @@ fn parse_expr(expr: Pair<Rule>) -> AstNode{
         Rule::Sum => {
             return parse_sum(expr);
         }
-        Rule::string => {
-            let str = expr.as_str();
-            let str = &str[1..str.len() - 1];
-            return AstNode::String(str.to_owned());
-        }
         Rule::bool => {
             let str = expr.as_str();
             if str == "true" {
@@ -496,6 +494,14 @@ fn parse_product(prod: Pair<Rule>) -> AstNode {
     if inner.clone().count() == 1 {
         return parse_value(inner.next().unwrap());
     }
+    else if inner.clone().count() == 2 {
+        let expr = Box::new(parse_expr(inner.next().unwrap()));
+        let target = inner.next().unwrap().as_str().to_owned();
+        return AstNode::Conv {
+            expr,
+            target
+        }
+    }
     else {
         let lhs = inner.next().unwrap();
         let op = inner.next().unwrap();
@@ -540,6 +546,11 @@ fn parse_value(val: Pair<Rule>) -> AstNode{
         }
         Rule::innerFuncCall => {
             return parse_func_call(val);
+        }
+        Rule::string => {
+            let str = val.as_str();
+            let str = &str[1..str.len() - 1];
+            return AstNode::String(str.to_owned());
         }
 
         _ => {
